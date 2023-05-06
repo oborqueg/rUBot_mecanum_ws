@@ -8,13 +8,12 @@ The mechanical structure is descrived below:<br>
 His main characteristics are: 
 - Arduino based control for sensors & actuators
     - Servomotr actuartos for the 4 mecanum wheels
-- As onboard controll it's used RaspberryPi4 (due to out of stock, can be used other controller board such as ROCK PI 4)
+- As onboard controll it's used RaspberryPi4 (due to out of stock, can be used other onboard controller such as ROCK PI 4)
     - RPlidar distance sensor
     - Two logitech C270 to capture the image and realize the line following and traffic sign detection
-- yyy
 
 In this document we will describe:
-- rUBot_2.0 model
+- Software needed to start.
 - Bringup SW and HW
 - Kinematic Movement Control
 - Self-Navigation
@@ -23,9 +22,22 @@ In this document we will describe:
 - Traffic signal identification
 
 
-## **1. rUBot_2.0_ model**
+## **1. Software needed to start**
 
-First of all, we have to create the "rubot_mecanum_description" package where we will create the rUBot model. In case you want to create it from scratch, type:
+First, you'll need to install the necessary software on your computer. We will work with Docker Desktop. This software will allow us to emulate an Ubuntu SO on our computer running Windows or MAC.
+Then we can download the sofware from the official website:  [Docker Desktop - Download](https://www.docker.com/products/docker-desktop/).
+
+Once downloaed, we have to download the image of Docker (a package that contains everything needed to run the application in different environments).
+- Open Docker Desktop
+- Go to the top search bar (or press "CTRL+K" on windows, "command+K" on MAC)
+- Type <b>arvinskushwaha/ros-noetic-desktop-vnc</b> and select "Images" below the search bar<br><img src="./Images/rubot_custom/docker_0.png" alt="Texto alternativo" width="800">
+
+
+
+
+
+
+"rubot_mecanum_description" package where we will create the rUBot model. In case you want to create it from scratch, type:
 ```shell
 cd ~/Desktop/ROS_github/rubot_mecanum_ws/src
 catkin_create_pkg rubot_mecanum_description rospy
