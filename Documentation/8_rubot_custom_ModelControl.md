@@ -30,7 +30,8 @@ Then we can download the sofware from the official website:  [Docker Desktop - D
 Once downloaed, we have to download the image of Docker (a package that contains everything needed to run the application in different environments).
 - Open Docker Desktop
 - Go to the top search bar (or press "CTRL+K" on windows, "command+K" on MAC)
-- Type <b>arvinskushwaha/ros-noetic-desktop-vnc</b> and select "Images" below the search bar<br><img src="./Images/rubot_custom/docker_0.png" alt="Texto alternativo" width="800">
+- Type <b>arvinskushwaha/ros-noetic-desktop-vnc</b> and select "Images" below the search bar, then donwload the image<br><img src="./Images/rubot_custom/docker_0.png" alt="Texto alternativo" width="500">
+- After downloaded, click on Images in the left-hand side menu (second option on the previous image) and click on the play button<br><img src="./Images/rubot_custom/docker_1.png" alt="Texto alternativo" width="500">
 
 
 
