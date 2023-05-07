@@ -70,4 +70,4 @@ You will see four options, then select select the one you want:
 |1: road.world|2: road_left.world|3: road_right.world|4: road_stop.world|
 |-------------|------------------|-------------------|------------------|
 |Perfect environment to test line following functionality|Perfect environment to test left signal detection. Same as the road.world but with a left signal|Perfect environment to test right signal detection. Same as the road.world but with a right signal|Perfect environment to test stop signal detection. Same as the road.world but with a stop signal|
-|<img src="./Images/rubot_custom/road_world.png" width="200">|<img src="./Images/rubot_custom/road_left.png" width="400">|<img src="./Images/rubot_custom/road_right.png" width="200">|<img src="./Images/rubot_custom/road_stop.png" width="200">|
+<img src="./Images/rubot_custom/road_world.png" width="200">|<img src="./Images/rubot_custom/road_left.png" width="400">|<img src="./Images/rubot_custom/road_right.png" width="200">|<img src="./Images/rubot_custom/road_stop.png" width="200">
