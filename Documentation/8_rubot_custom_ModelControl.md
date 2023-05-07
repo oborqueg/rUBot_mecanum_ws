@@ -66,11 +66,8 @@ In this project we have four different worlds in which we can emulate our rUBot.
 python world_select.py
 ```
 You will see four options, then select select the one you want:
-* 1: road.world - Perfect environment to test line following functionality.
-<br><img src="./Images/rubot_custom/road_world.png" width="400">
-* 2: road_left.world - Perfect environment to test let signal detection.
-<br><img src="./Images/rubot_custom/road_left.png" width="400">
-* 3: road_right.world - Perfect environment to test right signal detection.
-<br><img src="./Images/rubot_custom/road_right.png" width="400">
-* 4: road_stop.world - Perfect environment to test stop signal detection.
-<br><img src="./Images/rubot_custom/road_stop.png" width="400">
+
+|1: road.world|2: road_left.world|3: road_right.world|4: road_stop.world|
+|-------------|------------------|-------------------|------------------|
+|Perfect environment to test line following functionality|Perfect environment to test let signal detection.|Perfect environment to test right signal detection.|Perfect environment to test stop signal detection.|
+|<img src="./Images/rubot_custom/road_world.png" width="200">|<img src="./Images/rubot_custom/road_left.png" width="200">|<img src="./Images/rubot_custom/road_right.png" width="200">|<img src="./Images/rubot_custom/road_stop.png" width="200">|
