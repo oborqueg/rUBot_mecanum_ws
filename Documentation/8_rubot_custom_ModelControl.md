@@ -72,3 +72,7 @@ You will see four options, then select select the one you want:
 <img src="./Images/rubot_custom/road_world.png" width="500">|<img src="./Images/rubot_custom/road_left.png" width="400">|<img src="./Images/rubot_custom/road_right.png" width="200">|<img src="./Images/rubot_custom/road_stop.png" width="200">
 |Perfect environment to test line following functionality|Perfect environment to test left signal detection. Same as the road.world but with a left signal|Perfect environment to test right signal detection. Same as the road.world but with a right signal|Perfect environment to test stop signal detection. Same as the road.world but with a stop signal|
 
+At this point we have all ready to start testing in a simulated environment.
+### **Services**
+To use the HW, you need to install the NoMachine SW. You can get from this link: [NoMachine - Official website](https://www.nomachine.com/es) <br>
+Once NoMachine is installed, we need to add a new connection by clicking on the Add button and filling in the fields as shown in the image:<br><img src="./Images/rubot_custom/NoMachine_0.png" width="700">
