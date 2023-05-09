@@ -76,3 +76,20 @@ At this point we have all ready to start testing in a simulated environment.
 ### **Services**
 To use the HW, you need to install the NoMachine SW. You can get from this link: [NoMachine - Official website](https://www.nomachine.com/es) <br>
 Once NoMachine is installed, we need to add a new connection by clicking on the Add button and filling in the fields as shown in the image:<br><img src="./Images/rubot_custom/NoMachine_0.png" width="700">
+- <b>Nombre: </b>rUBot_XX where XX indicates the number of your rUBot. In this case is 01.
+- <b>Host: </b>10.42.0.1
+- <b>Puerto: </b>4000
+- <b>Protocolo: </b>NX<br>
+Make sure that you have turned on your Raspberri Pi (or your onboard controller) which was previously configured to generate an access point. In this case, our onboard controller creates a wifi network called "rUBot_01". Note that you will lose your internet connection when you connect to your board. In this case this wifi network is:
+When powering the raspberrypi4, generates a hotspot you have to connect to:
+- SSID name: rUBot_01 
+- password "rUBot_Mec"
+
+Once you are connected to this network you will be able to connect your computer to the raspberrypi4 using NoMachine viewer:
+- In PC open NoMachine viewer
+- Select the connection we configured before
+- you have to specify:
+    - user: ubuntu
+    - password: ubuntu1234
+- You will have the raspberrypi4 desktop on your windows NoMachine screen
+<img src="./Images/2_nomachine.png" width="700">
