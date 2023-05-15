@@ -275,3 +275,100 @@ The launch file has no parameters to modify:
   </node>
 </launch>
 ```
+## **5. Line Follower**
+We can simulate the line follower method to test if it's working as expected. <br>
+First let's choose the world, open a terminal in to our workspace:
+```shell
+python world_select
+```
+Select the first world (empty world), then open another terminal tab and type the following command:
+```shell
+roslaunch rubot_projects line_following.launch
+```
+It will execute the launch file for line_following script:
+```python
+#!/usr/bin/env python3
+import rospy
+import sys
+import time
+import numpy as np
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge
+import cv2
+
+class camera_sub:
+
+    def __init__(self):
+        rospy.init_node('line_following_sim', anonymous=True)
+        self.camera_sub = rospy.Subscriber('/rubot/camera1/image_raw',Image, self.camera_cb)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=20)
+        self.vel_msg=Twist()
+        self.bridge=CvBridge()
+
+    def camera_cb(self, data):
+        frame = self.bridge.imgmsg_to_cv2(data,desired_encoding="bgr8")
+        edged = cv2.Canny(frame ,60,100 )
+        
+        white_index=[]
+        mid_point_line = 0
+        for index,values in enumerate(edged[:][200]):# [172] index 0 on top
+            if(values == 255):
+                white_index.append(index)
+                
+        print("White: ",white_index)
+
+        if(len(white_index) >= 2 ):#== some times more than 2 white points 
+            cv2.circle(img=edged, center = (white_index[0],200), radius = 2 , color = (255,0,0), thickness=1)
+            cv2.circle(img=edged, center = (white_index[1],200), radius = 2 , color = (255,0,0), thickness=1)
+            mid_point_line = int ( (white_index[0] + white_index[1]) /2 )
+            cv2.circle(img=edged, center = (mid_point_line,200), radius = 3 , color = (255,0,0), thickness=2)
+
+        mid_point_robot = [160,200]#[135,172]
+        cv2.circle(img=edged, center = (mid_point_robot[0],mid_point_robot[1]), radius = 5 , color = (255,0,0), thickness=2)
+        error = mid_point_robot[0] - mid_point_line
+        print("Error -> " , error)
+
+        # Proportional control
+        Kp = 0.01 # Proportional gain
+        if (len(white_index) >= 2):
+            self.vel_msg.angular.z = Kp * error
+            self.vel_msg.linear.x = 0.2 # Set a constant forward velocity
+        else:
+            self.vel_msg.angular.z = 0.2 # Turn right if no line is detected
+            self.vel_msg.linear.x = 0.0 # Stop moving forward
+        
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+        cv2.imshow('Frame',frame)
+        cv2.imshow('Canny Output',edged)
+        cv2.waitKey(1)
+
+    def move(args=None):
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        line_following = camera_sub()
+        line_following.move()
+    except KeyboardInterrupt:
+        print ("Ending MoveForward")
+```
+## **6. Traffic Identification**
+The method used to detect the STOP signal in this code is the use of an OpenCV Haar cascade classifier.
+```python
+self.stop_cascade = cv2.CascadeClassifier('/home/ubuntu/rUBot_mecanum_ws/src/rubot_projects/src/stop_sign.xml')
+```
+The cascade classifier previously trained to detect STOP signals is loaded. Then, in the 'camera_cb' function, STOP signal detection is performed using this classifier:
+```python
+gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+stop_signs = self.stop_cascade.detectMultiScale(gray, 1.1, 5)
+if len(stop_signs) > 0:
+    print("Señal de STOP detectada")
+    # Detener el robot
+    self.vel_msg.linear.x = 0
+    self.vel_msg.angular.z = 0
+    self.cmd_vel_pub.publish(self.vel_msg)
+    return
+```
+First, the camera frame is converted to greyscale using 'cv2.cvtColor'. Then, the 'detectMultiScale' function of the cascade classifier is used to search for the presence of the STOP sign in the grayscale image. If the STOP signal is detected (the length of 'stop_signs' is greater than 0), a message is printed, the robot is stopped and a zero speed message is posted in the '/cmd_vel' topic.
