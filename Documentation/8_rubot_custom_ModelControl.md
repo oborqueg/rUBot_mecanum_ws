@@ -100,6 +100,23 @@ roslaunch rubot_projects rubot_bringup_hw.launch
 Then the bring up hardware will be done.
 
 ## **3. Movement Control**
+### **Movement control with python script**
+
+From the "rUBot_mecanum_ws" workspace, the src/rubot_control/ folder has 2 new folders:
+- scrip folder: with the python programs for specific movement control
+- launch folder: with programs to launch the movement control
+
+Diferent navigation programs are created:
+
+- Navigation control: to define a desired robot velocity
+- Lidar test: to verify the LIDAR readings and angles
+- Autonomous navigation: to perform a simple algorithm for navigation with obstacle avoidance using the LIDAR
+- Wall follower: at a fixed distance to perform a good map
+- go to POSE: attend a specific position and orientation
+
+The nodes and topics structure corresponds to the following picture:
+![Getting Started](./Images/2_nodes_topics.png)
+
 ### **a) Keyboard Movement Control**
 To control the gopigo robot with keyboard, we need to install "teleop_tools" package. Open a new terminal and install the packages:
 ```shell
@@ -117,23 +134,6 @@ rosrun key_teleop key_teleop.py /key_vel:=/cmd_vel
 or
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
-## **Movement control with python script**
-
-From the "rUBot_mecanum_ws" workspace, the src/rubot_control/ folder has 2 new folders:
-- scrip folder: with the python programs for specific movement control
-- launch folder: with programs to launch the movement control
-
-Diferent navigation programs are created:
-
-- Navigation control: to define a desired robot velocity
-- Lidar test: to verify the LIDAR readings and angles
-- Autonomous navigation: to perform a simple algorithm for navigation with obstacle avoidance using the LIDAR
-- Wall follower: at a fixed distance to perform a good map
-- go to POSE: attend a specific position and orientation
-
-The nodes and topics structure corresponds to the following picture:
-![Getting Started](./Images/2_nodes_topics.png)
-
 ### **b) Navigation control**
 
 We have created a first navigation python files in "src" folder:
