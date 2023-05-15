@@ -371,4 +371,5 @@ if len(stop_signs) > 0:
     self.cmd_vel_pub.publish(self.vel_msg)
     return
 ```
-First, the camera frame is converted to greyscale using 'cv2.cvtColor'. Then, the 'detectMultiScale' function of the cascade classifier is used to search for the presence of the STOP sign in the grayscale image. If the STOP signal is detected (the length of 'stop_signs' is greater than 0), a message is printed, the robot is stopped and a zero speed message is posted in the '/cmd_vel' topic.
+First, the camera frame is converted to greyscale using 'cv2.cvtColor'. Then, the 'detectMultiScale' function of the cascade classifier is used to search for the presence of the STOP sign in the grayscale image. If the STOP signal is detected (the length of 'stop_signs' is greater than 0), a message is printed, the robot is stopped and a zero speed message is posted in the '/cmd_vel' topic. <br>
+You can find the STOP model on the following path: oborqueg/rUBot_mecanum_ws/Documentation/files/Models/stop_sign.xml
