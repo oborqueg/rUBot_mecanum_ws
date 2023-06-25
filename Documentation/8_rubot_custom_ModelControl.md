@@ -40,8 +40,8 @@ Once downloaed, we have to download the image of Docker (a package that contains
 
 At this point we have all ready to start to work on our rUBot proejct
 
-## **2. Bringup HW and SW**
-### **2.1 Bringup SW**
+## **2. Bringup**
+### **2.1 SW**
 Now that we have everything installed, we can run our container. So launch Docker Desktop and go to Containers menu. Find the container that we created and press the Play button, in this example my container it's named as ROS1_Noetic_Container.
 After a few seconds we can click on the port 80:80 and it will open a browser with a localhost.<br><img src="./Images/rubot_custom/docker_3.png" width="600"><br>
 First of all, we need to locate the folder where our workspace is located and compile the project, in this case the directory you previously specified in the container path. In this example my workspace is in `/home/ubuntu/rUBot_mecanum_ws`.
@@ -61,7 +61,20 @@ cd /home/ubuntu/rUBot_mecanum_ws
 This way, every time we open a terminal, it will be located in our workspace.
 
 ### Bring up SW
+The platform of the rUBot 2.0 is larger and designed to be able to transport objects. The main difference with the rUBot 1.0 is that it consists of two Logitech C270 webcams, one that will be in charge of processing the images for line tracking and the other for signal detection. in the image below you can see the rubot 2.0 with the arrangement of its two webcams.
+<p align="center">
+  <img src="./Images/rubot_custom/rubot2_0.png" width="300"><br>
+</p>
+To create a world in gazebo you first have to create the model. In this case the model called "road_circle" has been used. For details see rUBot_mecanum_ws/src/rubot_mecanum_description/models/road_circle.<br>
+Inside the road_circle folder there are two files and a folder:<br>
+- model.config: This is a configuration file used in Gazebo to describe the properties and metadata of a model. This file is used to provide information about the model and to configure its behaviour within the simulation environment<br>
+- model.sdf: is a Simulation Description Format (SDF) file used in Gazebo to describe the structure, physical properties, graphics and other attributes of a model.<br>
+Inside the "materials" folder there will be two more folders, one called "scripts" and one called "textures".<br>
+- Scripts folder: A file called road_circle.material is created. It is a configuration file used in Ogre, the rendering engine used by Gazebo, to define materials and shaders used in the visual representation of the objects in the simulation. The name "road_circle" refers to the name of the specific material file you are using.<br>
+- Textures folder: A .png file is added with the texture we want to add.<br>
+Models have been created for the ground (the circle for the line following) and the various road signs.<br>
 In this project we have four different worlds in which we can emulate our rUBot. To choose which one we want to work on, there is a Python script that allows you to choose one of these three. To execute this script, open a terminal inside of rUBot_mecanum_ws and type the following command:
+
 ```shell
 python world_select.py
 ```
@@ -72,8 +85,22 @@ You will see four options, then select select the one you want:
 <img src="./Images/rubot_custom/road_world.png" width="500">|<img src="./Images/rubot_custom/road_left.png" width="400">|<img src="./Images/rubot_custom/road_right.png" width="200">|<img src="./Images/rubot_custom/road_stop.png" width="200">
 |Perfect environment to test line following functionality|Perfect environment to test left signal detection. Same as the road.world but with a left signal|Perfect environment to test right signal detection. Same as the road.world but with a right signal|Perfect environment to test stop signal detection. Same as the road.world but with a stop signal|
 
+In the simulation bingup, the following nodes are run:<br>
+
+**empty_world.launch:** This node is launched using the gazebo_ros package. It is responsible for starting the Gazebo simulation environment with an empty world. It receives as argument the name of the world file (road.world) and is specified by including the corresponding file.
+
+**spawn_model:** This node is launched using the gazebo_ros package. It is responsible for creating and placing a model in the Gazebo simulation environment. It receives several arguments, including the path to the model's URDF file (rubot_rp.urdf) and the position (x_pos, y_pos, z_pos) and orientation (yaw) coordinates of the model in the environment. The model is created with the name "rUBot" and the robot_description parameter is used to load the robot description from the URDF file.
+
+**joint_state_publisher:** This node is launched using the joint_state_publisher package. It is responsible for publishing simulated joint values for the model. It is configured not to display a GUI (use_gui is set to "False").
+
+**robot_state_publisher:** This node is launched using the robot_state_publisher package. It is responsible for publishing the state of the robot model in the global coordinate system. It uses the description of the robot provided in the robot_description parameter to obtain the direct kinematics of the model.
+
+**rviz:** This node is launched using the rviz package. It is a 3D visualisation tool that displays the robot model and other data in real time. It receives an RViz configuration file (rubot_nav.rviz) via the -d argument to set the appropriate visualisation configuration.
+
+
+These nodes work together to set up the simulation environment in Gazebo, load the robot model, publish joint states and visualise the model in RViz.
 At this point we have all ready to start testing in a simulated environment.
-### **2.2 Bringup HW**
+### **2.2 HW**
 To use the HW, you need to install the NoMachine SW. You can get from this link: [NoMachine - Official website](https://www.nomachine.com/es) <br>
 Once NoMachine is installed, we need to add a new connection by clicking on the Add button and filling in the fields as shown in the image:<br><img src="./Images/rubot_custom/NoMachine_0.png" width="700">
 - <b>Nombre: </b>rUBot_XX where XX indicates the number of your rUBot. In this case is 01.
@@ -97,7 +124,21 @@ Now open a terminal in your workspace folder and type the following command:
 ```shell
 roslaunch rubot_projects rubot_bringup_hw.launch
 ```
-Then the bring up hardware will be done.
+
+The nodes that are executed when running rubot_bringup_hw.launch are the following: <br>
+- **joint_state_publisher:** This node is responsible for publishing values of the rUBot's wheels.
+- **robot_state_publisher:** This node is used to publish the state of the robot, including the transformation between the robot's reference frames. The robot_state_publisher package is used to run this node.
+- **rviz:** This node is used to run the RViz visualisation application, which allows the visualisation and analysis of 3D data of the robot and its environment. The rviz package is used to run this node.
+- **serial_node:** This node is part of the rosserial_python package and is used to communicate with a serial device, in this case, it is being used to communicate on port /dev/ttyACM0 with a baud rate of 500000.
+- **rplidar.launch:** The rplidar.launch file, provided by the rplidar_ros package, is launched to start and configure the node related to the RPLidar lidar laser scanner. Following the configuration for the Lidar, described inside the rplidar.launch file:<br>
+*- serial_port:* Specifies the serial port to which the laser scanner is connected. In this case, it is set to /dev/ttyUSB0.<br>
+*- serial_baudrate:* Specifies the baud rate used for communication with the laser scanner. In this case, it is set to 115200.<br>
+*- frame_id:* Specifies the reference frame associated with the laser scanner. In this case, it is set to "base_link".<br>
+*- inverted:* Specifies whether the laser scanner is inverted or not. In this case, it is set to false, which means that it is not inverted.<br>
+*- angle_compensate:* Specifies whether angle compensation of the laser scanner is performed. In this case, it is set to true, which means that compensation is applied.
+- **usb_cam.launch:** The launch file usb_cam.launch, provided by the rubot_projects package, is launched to start and configure the USB camera related node.
+
+
 
 ## **3. Movement Control**
 ### **Movement control with python script**
@@ -276,6 +317,7 @@ The launch file has no parameters to modify:
 </launch>
 ```
 ## **5. Line Follower**
+### **5.1 SW**
 We can simulate the line follower method to test if it's working as expected. <br>
 First let's choose the world, open a terminal in to our workspace:
 ```shell
@@ -354,6 +396,171 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print ("Ending MoveForward")
 ```
+The code implements a ROS node in Python that subscribes to the image message coming from the camera (/rubot/camera1/image_raw). The goal of the node is to follow a line in the image using image processing and proportional control techniques.
+
+Below is a summary of the main parts of the code:
+
+1. The necessary packages and modules are imported, including rospy for communication with ROS, numpy for numerical operations, cv2 for image processing using OpenCV and the necessary ROS messages (Image and Twist).
+
+2. A class called camera_sub is defined to represent the ROS node. The constructor __init__ initialises the node, creates the necessary subscribers and publishers, and sets important variables.
+
+3. The camera_cb method is the callback that is executed each time an image message is received from the camera. In this method, image processing is performed to detect the line.
+
+- The image is converted from ROS format to OpenCV format using cv_bridge.
+- The Canny operator is applied to obtain the edges of the image.
+- The white pixels in the region of interest are identified and their indices are stored in the white_index list.
+- The midpoint of the line is calculated from the white pixel indices.
+- The error is calculated as the difference between the position of the midpoint of the line and the desired position of the robot.
+4. A proportional control is defined to adjust the angular velocity of the robot according to the error. If the line is detected (at least 2 white pixels), the angular velocity is calculated proportionally to the error. In addition, a constant linear velocity is set. If the line is not detected, the robot turns to the right and stops.
+
+5. The velocity commands (Twist) are published in the /cmd_vel topic using the cmd_vel_pub publisher.
+
+6. The original image and the processed image are displayed in separate windows using cv2.imshow.
+
+7. The move method is used to keep the node running using rospy.spin().
+
+8. In the if __name__ == '__main__': block, an instance of the camera_sub class is created, the move method is called and a KeyboardInterrupt exception is caught to properly terminate the node when Ctrl+C is pressed.
+### **5.2 HW**
+```python
+#!/usr/bin/env python3
+import rospy
+import sys
+import time
+import numpy as np
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+import cv2
+from cv_bridge import CvBridge
+from keras.models import load_model
+from PIL import Image, ImageOps
+
+class CameraSub:
+
+    def __init__(self):
+        rospy.init_node('line_following_sim', anonymous=True)
+        self.line_sub = rospy.Subscriber('/usb_cam0/image_raw', Image, self.line_cb)
+        self.sign_sub = rospy.Subscriber('/usb_cam1/image_raw', Image, self.sign_cb)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.vel_msg = Twist()
+        self.bridge = CvBridge()
+        self.model = load_model("keras_Model.h5", compile=False)
+        self.class_names = open("labels.txt", "r").readlines()
+
+    def line_cb(self, data):
+        frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+        hsvFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # Line following code
+        yellow_lower = np.array([0, 0, 0], np.uint8)
+        yellow_upper = np.array([180, 255, 30], np.uint8)
+
+        yellow_mask = cv2.inRange(hsvFrame, yellow_lower, yellow_upper)
+        kernal = np.ones((5, 5), "uint8")
+        yellow_mask = cv2.dilate(yellow_mask, kernal)
+        res_yellow = cv2.bitwise_and(frame, frame, mask=yellow_mask)
+
+        # Line following logic
+        white_index = []
+        mid_point_line = 5
+        for index, values in enumerate(yellow_mask[:][200]):
+            if values == 255:
+                white_index.append(index)
+
+        print("White:", white_index)
+
+        if len(white_index) >= 2:
+            cv2.circle(img=yellow_mask, center=(white_index[0], 100), radius=2, color=(255, 0, 0), thickness=1)
+            cv2.circle(img=yellow_mask, center=(white_index[1], 100), radius=2, color=(255, 0, 0), thickness=1)
+            mid_point_line = int((white_index[0] + white_index[1]) / 2)
+            cv2.circle(img=yellow_mask, center=(mid_point_line, 100), radius=3, color=(255, 0, 0), thickness=2)
+
+        mid_point_robot = [160, 100]
+        cv2.circle(img=yellow_mask, center=(mid_point_robot[0], mid_point_robot[1]), radius=5, color=(255, 0, 0), thickness=2)
+        error = mid_point_robot[0] - mid_point_line
+        print("Error:", error)
+
+        if error < 0:
+            self.vel_msg.angular.z = -0.1
+        else:
+            self.vel_msg.angular.z = 0.1
+
+        self.vel_msg.linear.x = 0.05
+
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+        cv2.imshow('Line Following', frame)
+        cv2.imshow('Yellow mask', yellow_mask)
+        cv2.imshow('Yellow rest', res_yellow)
+        cv2.waitKey(1)
+
+    def sign_cb(self, data):
+        frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+
+        # Sign detection code
+        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        size = (224, 224)
+        image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+        image_array = np.asarray(image)
+        normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+        data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+        data[0] = normalized_image_array
+
+        prediction = self.model.predict(data)
+        index = np.argmax(prediction)
+        class_name = self.class_names[index]
+        confidence_score = prediction[0][index]
+
+        print("Class:", class_name[2:])
+        print("Confidence Score:", confidence_score)
+
+        if class_name == "STOP":
+            self.stop()
+        elif class_name == "LEFT":
+            self.turn_left()
+        elif class_name == "RIGHT":
+            self.turn_right()
+
+        cv2.imshow('Sign Detection', frame)
+        cv2.waitKey(1)
+
+    def stop(self):
+        self.vel_msg.angular.z = 0.0
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def turn_left(self):
+        self.vel_msg.angular.z = 0.2
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def turn_right(self):
+        self.vel_msg.angular.z = -0.2
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def move(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        line_following = CameraSub()
+        line_following.move()
+    except KeyboardInterrupt:
+        print("Ending MoveForward")
+```
+
+The code implements a node that uses the two cameras to perform one-line tracking and traffic sign detection. The node subscribes to image messages from the cameras (/usb_cam0/image_raw and /usb_cam1/image_raw) and publishes speed commands to the /cmd_vel topic to control the movement of a robot.
+
+A class called CameraSub is defined which represents the ROS node. The __init__ constructor initialises the node, creates the necessary subscribers and publishers, and loads a pre-trained traffic signal classification model and corresponding classes.
+
+The line_cb method is executed each time an image message is received from the line tracking camera. In this method, the image is processed to detect the line. The image is converted to OpenCV format, converted to HSV colour space and a mask is applied to detect yellow pixels, representative of the line. The error is then calculated as a function of the detected line position and the angular velocity of the robot is adjusted.
+
+The sign_cb method is executed each time an image message is received from the traffic sign detection camera. Signal detection is performed here using a pre-trained classification model. The image is processed and resized to match the format required by the model. Then, a prediction is made using the model and actions are taken based on the detected class, such as stop, left turn or right turn.
+
+Furthermore, additional methods are defined to adjust the speed commands according to the required actions, such as stop, turn left or turn right.
+
+Finally, the processed images are displayed in separate windows using OpenCV, and the rospy.spin() method is used to keep the node running.
+
 ## **6. Traffic Identification**
 The method used to detect the STOP signal in this code is the use of an OpenCV Haar cascade classifier.
 ```python
