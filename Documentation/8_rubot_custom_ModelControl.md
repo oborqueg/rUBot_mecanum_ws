@@ -562,7 +562,175 @@ Furthermore, additional methods are defined to adjust the speed commands accordi
 Finally, the processed images are displayed in separate windows using OpenCV, and the rospy.spin() method is used to keep the node running.
 
 ## **6. Traffic Identification**
-The method used to detect the STOP signal in this code is the use of an OpenCV Haar cascade classifier.
+For the signal identification part, the image recognition tool developed by Google, Teachable Machine based on Tensorflow, has been used. Here is the link to the official website:  [Teachable Machine](chat.openai.com/?model=text-davinci-002-render-sha/).<br>
+For this purpose, a standard image project has been created and four different classes have been defined: Right, Left, STOP and Environment.
+The environment class has been specially created so that when the robot does not detect any signal, it will follow the line.
+Las imágenes usadas son las siguientes:
+|1: LEFT|2: RIGHT|3: STOP|
+|-------------|------------------|-------------------|
+<img src="./Images/rubot_custom/left.png">|<img src="./Images/rubot_custom/right.png">|<img src="./Images/rubot_custom/stop.png">|
+|Left traffic sign|Right traffic sign|Stop traffic sign|
+
+To capture images of the environment, simply take webcam samples of the environment where the rubot is going to move. <br>
+the code used for signal identification combined with the line follower is as follows:
+```python
+#!/usr/bin/env python3
+import rospy
+import sys
+import time
+import numpy as np
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+import cv2
+from cv_bridge import CvBridge
+from keras.models import load_model
+from PIL import Image, ImageOps
+
+class CameraSub:
+
+    def __init__(self):
+        rospy.init_node('line_following_sim', anonymous=True)
+        self.line_sub = rospy.Subscriber('/usb_cam0/image_raw', Image, self.line_cb)
+        self.sign_sub = rospy.Subscriber('/usb_cam1/image_raw', Image, self.sign_cb)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.vel_msg = Twist()
+        self.bridge = CvBridge()
+        self.model = load_model("keras_Model.h5", compile=False)
+        self.class_names = open("labels.txt", "r").readlines()
+
+    def line_cb(self, data):
+        frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+        hsvFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # Line following code
+        yellow_lower = np.array([0, 0, 0], np.uint8)
+        yellow_upper = np.array([180, 255, 30], np.uint8)
+
+        yellow_mask = cv2.inRange(hsvFrame, yellow_lower, yellow_upper)
+        kernal = np.ones((5, 5), "uint8")
+        yellow_mask = cv2.dilate(yellow_mask, kernal)
+        res_yellow = cv2.bitwise_and(frame, frame, mask=yellow_mask)
+
+        # Line following logic
+        white_index = []
+        mid_point_line = 5
+        for index, values in enumerate(yellow_mask[:][200]):
+            if values == 255:
+                white_index.append(index)
+
+        print("White:", white_index)
+
+        if len(white_index) >= 2:
+            cv2.circle(img=yellow_mask, center=(white_index[0], 100), radius=2, color=(255, 0, 0), thickness=1)
+            cv2.circle(img=yellow_mask, center=(white_index[1], 100), radius=2, color=(255, 0, 0), thickness=1)
+            mid_point_line = int((white_index[0] + white_index[1]) / 2)
+            cv2.circle(img=yellow_mask, center=(mid_point_line, 100), radius=3, color=(255, 0, 0), thickness=2)
+
+        mid_point_robot = [160, 100]
+        cv2.circle(img=yellow_mask, center=(mid_point_robot[0], mid_point_robot[1]), radius=5, color=(255, 0, 0), thickness=2)
+        error = mid_point_robot[0] - mid_point_line
+        print("Error:", error)
+
+        if error < 0:
+            self.vel_msg.angular.z = -0.1
+        else:
+            self.vel_msg.angular.z = 0.1
+
+        self.vel_msg.linear.x = 0.05
+
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+        cv2.imshow('Line Following', frame)
+        cv2.imshow('Yellow mask', yellow_mask)
+        cv2.imshow('Yellow rest', res_yellow)
+        cv2.waitKey(1)
+
+    def sign_cb(self, data):
+        frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+
+        # Sign detection code
+        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        size = (224, 224)
+        image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+        image_array = np.asarray(image)
+        normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+        data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+        data[0] = normalized_image_array
+
+        prediction = self.model.predict(data)
+        index = np.argmax(prediction)
+        class_name = self.class_names[index]
+        confidence_score = prediction[0][index]
+
+        print("Class:", class_name[2:])
+        print("Confidence Score:", confidence_score)
+
+        if class_name == "STOP":
+            self.stop()
+        elif class_name == "LEFT":
+            self.turn_left()
+        elif class_name == "RIGHT":
+            self.turn_right()
+        elif class_name == "ENV":
+            self.line_cb(data)
+
+        cv2.imshow('Sign Detection', frame)
+        cv2.waitKey(1)
+
+    def stop(self):
+        self.vel_msg.angular.z = 0.0
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def turn_left(self):
+        self.vel_msg.angular.z = 0.2
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def turn_right(self):
+        self.vel_msg.angular.z = -0.2
+        self.vel_msg.linear.x = 0.0
+        self.cmd_vel_pub.publish(self.vel_msg)
+
+    def move(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        line_following = CameraSub()
+        line_following.move()
+    except KeyboardInterrupt:
+        print("Ending MoveForward")
+```
+Signal detection is performed in the 'sign_cb' function and line tracking is performed in the 'line_cb' function. The execution flow of each is explained below:<br>
+
+**Signal detection:**<br>
+- In the 'sign_cb' function, an image is received from the camera and processed to prepare it for signal detection.
+- The image is passed through a pre-trained neural network model to obtain a class prediction and confidence score for each class.
+- The class with the highest confidence score is selected as the detected class.
+- Depending on the detected class, specific actions are taken:
+    - If the class is "STOP", the robot motion is stopped.
+    - If the class is "LEFT", the robot is instructed to turn left.
+    - If the class is "RIGHT", the robot is instructed to turn right.
+    - If the class is "ENV", the line_cb function is called to perform line tracking.
+- The processed image with the signal detections is displayed in a window.
+
+**Line tracking:**<br>
+- In the 'line_cb' function, an image is received from the camera and processed to detect a yellow line to be followed.
+- The image is converted to HSV colour space and a mask is applied to isolate the yellow pixels.<br>
+- White pixels are identified in the resulting mask.
+- If at least two white pixels are detected, the midpoint of the line is calculated.
+- The error is calculated as the difference between the position of the midpoint of the line and a reference position of the robot.
+- Based on the error, the angular velocity of the robot is adjusted to keep it at the centre of the line.
+- The updated velocity command is issued to control the movement of the robot.
+- The processed images and masks are displayed in separate windows for visualisation. <br>
+
+It is important to note that the effectiveness and accuracy of signal detection and line tracking depend on the quality of the input images, the models used and the processing parameters applied.
+
+**ALTERNATIVE METHOD**<br>
+
+
+Antoher method used to detect the signal in this code is the use of an OpenCV Haar cascade classifier.
 ```python
 self.stop_cascade = cv2.CascadeClassifier('/home/ubuntu/rUBot_mecanum_ws/src/rubot_projects/src/stop_sign.xml')
 ```
